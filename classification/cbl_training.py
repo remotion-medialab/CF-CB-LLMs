@@ -294,7 +294,7 @@ def train_cbl_model(
     print(f"\nCBL training completed in {training_time:.4f} hours")
 
     # Save model
-    save_dir = f"./{concept_text_sim_model}_acs/{d_name}/{backbone}_cbm/"
+    save_dir = f"{concept_text_sim_model}_acs/{d_name}/{backbone}_cbm/"
     os.makedirs(save_dir, exist_ok=True)
 
     model_name = "cbl"

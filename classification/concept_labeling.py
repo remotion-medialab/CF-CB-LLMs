@@ -19,6 +19,7 @@ def generate_concept_labels(
     concept_text_sim_model='mpnet',
     max_length=512,
     num_workers=0,
+    force_regenerate=False,
 ):
     """
     Generate concept similarity labels for dataset.
@@ -28,10 +29,52 @@ def generate_concept_labels(
         concept_text_sim_model: Model for computing concept similarities ('mpnet' or 'simcse')
         max_length: Maximum sequence length
         num_workers: Number of workers for data loading
+        force_regenerate: If True, regenerate even if labels exist. If False, load existing labels.
 
     Returns:
         dict: Metrics including similarity statistics and timing
     """
+    # Check if concept labels already exist
+    d_name = dataset.replace('/', '_')
+    prefix = f"{concept_text_sim_model}_acs/{d_name}"
+    train_labels_path = f"{prefix}/concept_labels_train.npy"
+    val_labels_path = f"{prefix}/concept_labels_val.npy"
+
+    if not force_regenerate and os.path.exists(train_labels_path):
+        print(f"Found existing concept labels at {prefix}")
+        print("Loading pre-computed concept labels...")
+
+        # Load existing labels
+        train_similarity = np.load(train_labels_path)
+        val_similarity = None
+        if os.path.exists(val_labels_path):
+            val_similarity = np.load(val_labels_path)
+
+        # Get concept set for metrics
+        concept_set = CFG.concept_set[dataset]
+
+        # Compute metrics from loaded labels
+        metrics = {
+            'num_concepts': len(concept_set),
+            'train_similarity_mean': float(train_similarity.mean()),
+            'train_similarity_std': float(train_similarity.std()),
+            'train_similarity_min': float(train_similarity.min()),
+            'train_similarity_max': float(train_similarity.max()),
+        }
+
+        if val_similarity is not None:
+            metrics['val_similarity_mean'] = float(val_similarity.mean())
+            metrics['val_similarity_std'] = float(val_similarity.std())
+            metrics['val_similarity_min'] = float(val_similarity.min())
+            metrics['val_similarity_max'] = float(val_similarity.max())
+
+        print(f"Loaded concept labels: {train_similarity.shape}")
+        print(f"Mean similarity: {metrics['train_similarity_mean']:.4f}")
+
+        return metrics
+
+    # Otherwise, generate concept labels from scratch
+    print(f"Generating concept labels from scratch...")
     device = torch.device("cuda" if torch.cuda.is_available() else
                          "mps" if torch.backends.mps.is_available() else "cpu")
 
@@ -192,7 +235,7 @@ def generate_concept_labels(
 
     # Save to disk
     d_name = dataset.replace('/', '_')
-    prefix = f"./{concept_text_sim_model}_acs/{d_name}/"
+    prefix = f"{concept_text_sim_model}_acs/{d_name}"
     os.makedirs(prefix, exist_ok=True)
 
     np.save(f"{prefix}/concept_labels_train.npy", train_similarity)
