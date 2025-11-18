@@ -13,7 +13,7 @@ import time
 
 parser = argparse.ArgumentParser()
 
-device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+device = torch.device("mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu"))
 parser.add_argument("--dataset", type=str, default="SetFit/sst2")
 parser.add_argument("--concept_text_sim_model", type=str, default="mpnet", help="mpnet, simcse or angle")
 

@@ -1,0 +1,58 @@
+program: main_sweep.py
+method: grid
+project: CB-LLM-Classification-Test
+parameters:
+  # Dataset selection
+  dataset:
+    values: ['SetFit/sst2']
+
+  # Model architecture
+  backbone:
+    values: ['roberta']
+
+  # Concept labeling method
+  concept_text_sim_model:
+    values: ['mpnet']
+
+  # Training strategy
+  automatic_concept_correction:
+    values: [true]
+
+  tune_cbl_only:
+    values: [false]
+
+  # Hyperparameters
+  dropout:
+    values: [0.1]
+
+  batch_size:
+    values: [16]
+
+  cbl_only_batch_size:
+    values: [64]
+
+  # Learning rate (5e-6 for backbone+CBL training)
+  learning_rate:
+    values: [0.000005]
+
+  # Training epochs
+  cbl_epochs:
+    values: [10]
+
+  # SAGA parameters for final layer
+  saga_epoch:
+    values: [500]
+
+  saga_batch_size:
+    values: [256]
+
+  # Random seed for reproducibility
+  seed:
+    values: [42]
+
+  # System
+  max_length:
+    values: [512]
+
+  num_workers:
+    values: [0]
