@@ -24,9 +24,28 @@ import config as CFG
 def main():
     """Main pipeline orchestrator with W&B integration."""
 
-    # Initialize W&B
+    # Initialize W&B with custom run name
     run = wandb.init()
     config = wandb.config
+
+    # Create descriptive run name based on configuration
+    dataset_short = config.dataset.split('/')[-1]
+    acc_str = "ACC" if config.automatic_concept_correction else "noACC"
+    run_name = f"{dataset_short}_{config.backbone}_{config.concept_text_sim_model}_{acc_str}_lr{config.learning_rate}_seed{config.seed}"
+
+    # Update run name and add tags
+    run.name = run_name
+    run.tags = [
+        config.dataset,
+        config.backbone,
+        config.concept_text_sim_model,
+        acc_str,
+        f"seed{config.seed}"
+    ]
+    run.notes = f"CB-LLM classification on {config.dataset} with {config.backbone} backbone"
+
+    # Save the config update
+    run.save()
 
     print("="*80)
     print("CB-LLM Classification Pipeline with W&B Integration")
