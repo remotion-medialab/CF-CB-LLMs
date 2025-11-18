@@ -44,9 +44,6 @@ def main():
     ]
     run.notes = f"CB-LLM classification on {config.dataset} with {config.backbone} backbone"
 
-    # Save the config update
-    run.save()
-
     print("="*80)
     print("CB-LLM Classification Pipeline with W&B Integration")
     print("="*80)
