@@ -83,9 +83,7 @@ def main():
     # Track total pipeline time
     pipeline_start_time = time.time()
 
-    # =========================================================================
     # STAGE 1: Concept Labeling
-    # =========================================================================
     print("\n" + "="*80)
     print("STAGE 1: Generating Concept Labels")
     print("="*80)
@@ -113,9 +111,7 @@ def main():
         wandb.log({"stage1_error": str(e)})
         raise
 
-    # =========================================================================
     # STAGE 2: CBL Training
-    # =========================================================================
     print("\n" + "="*80)
     print("STAGE 2: Training Concept Bottleneck Layer")
     print("="*80)
@@ -165,9 +161,7 @@ def main():
         wandb.log({"stage2_error": str(e)})
         raise
 
-    # =========================================================================
     # STAGE 3: Final Layer Training
-    # =========================================================================
     print("\n" + "="*80)
     print("STAGE 3: Training Final Layer")
     print("="*80)
@@ -209,9 +203,7 @@ def main():
         wandb.log({"stage3_error": str(e)})
         raise
 
-    # =========================================================================
     # STAGE 4: Evaluation
-    # =========================================================================
     print("\n" + "="*80)
     print("STAGE 4: Evaluating CB-LLM")
     print("="*80)
@@ -258,9 +250,7 @@ def main():
         wandb.log({"stage4_error": str(e)})
         raise
 
-    # =========================================================================
     # Pipeline Summary
-    # =========================================================================
     total_time = (time.time() - pipeline_start_time) / 3600
 
     print("\n" + "="*80)
