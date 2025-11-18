@@ -13,7 +13,7 @@ import time
 
 parser = argparse.ArgumentParser()
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 parser.add_argument("--dataset", type=str, default="SetFit/sst2")
 parser.add_argument("--backbone", type=str, default="roberta", help="roberta or gpt2")
 parser.add_argument('--tune_cbl_only', action=argparse.BooleanOptionalAction)

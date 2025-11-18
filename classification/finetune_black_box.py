@@ -10,7 +10,7 @@ from utils import eos_pooling
 
 parser = argparse.ArgumentParser()
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 parser.add_argument("--dataset", type=str, default="SetFit/sst2")
 parser.add_argument("--backbone", type=str, default="roberta", help="roberta or gpt2")
 parser.add_argument("--batch_size", type=int, default=8)
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         tokenizer.pad_token = tokenizer.eos_token
     else:
         raise Exception("backbone should be roberta or gpt2")
-    
+
     encoded_train_dataset = train_dataset.map(
         lambda e: tokenizer(e[CFG.example_name[args.dataset]], padding=True, truncation=True, max_length=args.max_length), batched=True,
         batch_size=len(train_dataset))

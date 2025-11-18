@@ -12,7 +12,7 @@ from utils import normalize, eos_pooling
 
 parser = argparse.ArgumentParser()
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 parser.add_argument("--cbl_path", type=str, default="mpnet_acs/SetFit_sst2/roberta_cbm/cbl.pt")
 parser.add_argument('--sparse', action=argparse.BooleanOptionalAction)
 parser.add_argument("--batch_size", type=int, default=256)
@@ -40,6 +40,7 @@ def build_loaders(texts, mode):
     return dataloader
 
 if __name__ == "__main__":
+    print('hello')
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     args = parser.parse_args()
 
@@ -47,7 +48,7 @@ if __name__ == "__main__":
     dataset = args.cbl_path.split("/")[1] if 'sst2' not in args.cbl_path.split("/")[1] else args.cbl_path.split("/")[1].replace('_', '/')
     backbone = args.cbl_path.split("/")[2]
     cbl_name = args.cbl_path.split("/")[-1]
-    
+
     print("loading data...")
     test_dataset = load_dataset(dataset, split='test')
     print("test data len: ", len(test_dataset))

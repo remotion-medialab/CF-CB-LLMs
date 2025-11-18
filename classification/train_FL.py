@@ -13,7 +13,7 @@ from utils import normalize, eos_pooling
 
 parser = argparse.ArgumentParser()
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 parser.add_argument("--cbl_path", type=str, default="mpnet_acs/SetFit_sst2/roberta_cbm/cbl.pt")
 parser.add_argument("--batch_size", type=int, default=128)
 parser.add_argument("--saga_epoch", type=int, default=500)
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     dataset = args.cbl_path.split("/")[1] if 'sst2' not in args.cbl_path.split("/")[1] else args.cbl_path.split("/")[1].replace('_', '/')
     backbone = args.cbl_path.split("/")[2]
     cbl_name = args.cbl_path.split("/")[-1]
-    
+
     print("loading data...")
     train_dataset = load_dataset(dataset, split='train')
     if dataset == 'SetFit/sst2':
@@ -264,4 +264,3 @@ if __name__ == "__main__":
     torch.save(b_g, prefix + 'b_g' + model_name)
     torch.save(W_g_sparse, prefix + 'W_g_sparse' + model_name)
     torch.save(b_g_sparse, prefix + 'b_g_sparse' + model_name)
-
