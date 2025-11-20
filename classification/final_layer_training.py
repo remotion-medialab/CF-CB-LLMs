@@ -252,29 +252,74 @@ def train_final_layer(
         'fl_train_features_max': float(FL_train_features.max()),
     }
 
-    # Train linear layer using GLM-SAGA
-    print(f"Training linear layer with GLM-SAGA ({saga_epoch} iterations)...")
+    # Create dataloaders for SAGA
     indexed_train_ds = IndexedTensorDataset(FL_train_features, FL_train_labels)
-    train_loader_saga = DataLoader(indexed_train_ds, batch_size=saga_batch_size, shuffle=True)
+    indexed_train_loader = DataLoader(indexed_train_ds, batch_size=saga_batch_size, shuffle=True)
+
+    if val_dataset:
+        val_ds = TensorDataset(FL_val_features, FL_val_labels)
+        val_loader = DataLoader(val_ds, batch_size=saga_batch_size, shuffle=False)
+
+    test_ds = TensorDataset(FL_test_features, FL_test_labels)
+    test_loader = DataLoader(test_ds, batch_size=saga_batch_size, shuffle=False)
 
     # Get number of classes
     n_classes = CFG.class_num[dataset]
 
-    # Train with SAGA
-    linear_layer = glm_saga(
-        train_loader_saga,
-        loss='multinomial',
-        alpha=0.0,
-        l1_ratio=0.0,
-        max_iter=saga_epoch,
-        verbose=True
-    )
+    # Initialize linear layer
+    print(f"Initializing linear layer: {FL_train_features.shape[1]} -> {n_classes}")
+    linear = torch.nn.Linear(FL_train_features.shape[1], n_classes)
+    linear.weight.data.zero_()
+    linear.bias.data.zero_()
 
-    # Save linear layer
+    # SAGA parameters (from original implementation)
+    STEP_SIZE = 0.05
+    ALPHA = 0.99
+
+    # Train linear layer using GLM-SAGA
+    print(f"Training linear layer with GLM-SAGA ({saga_epoch} iterations)...")
+    if val_dataset:
+        output_proj = glm_saga(
+            linear,
+            indexed_train_loader,
+            STEP_SIZE,
+            saga_epoch,
+            ALPHA,
+            k=10,
+            val_loader=val_loader,
+            test_loader=test_loader,
+            do_zero=True,
+            n_classes=n_classes
+        )
+    else:
+        output_proj = glm_saga(
+            linear,
+            indexed_train_loader,
+            STEP_SIZE,
+            saga_epoch,
+            ALPHA,
+            k=10,
+            test_loader=test_loader,
+            do_zero=True,
+            n_classes=n_classes
+        )
+
+    print(f"Training completed. Test accuracy: {output_proj['path'][-1]['metrics']['acc_test']:.4f}")
+
+    # Extract trained weights
+    W_g = output_proj['path'][-1]['weight']
+    b_g = output_proj['path'][-1]['bias']
+
+    # Save linear layer as state dict
     linear_layer_path = os.path.join(os.path.dirname(cbl_path), "linear_layer.pt")
-    torch.save(linear_layer, linear_layer_path)
+    linear_state = {
+        'weight': W_g,
+        'bias': b_g
+    }
+    torch.save(linear_state, linear_layer_path)
     print(f"Saved linear layer to {linear_layer_path}")
 
     metrics['saga_iterations'] = saga_epoch
+    metrics['fl_test_accuracy'] = float(output_proj['path'][-1]['metrics']['acc_test'])
 
     return metrics, linear_layer_path
