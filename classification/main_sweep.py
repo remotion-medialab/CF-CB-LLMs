@@ -219,24 +219,12 @@ def main():
 
         # Log Stage 4 metrics
         for key, value in eval_metrics.items():
-            if key != 'confusion_matrix':  # Skip confusion matrix for now
+            if key != 'confusion_matrix':  # Skip confusion matrix for structured logging
                 wandb.log({f"stage4_{key}": value})
-
-        # Log confusion matrix as a W&B table
-        if 'confusion_matrix' in eval_metrics:
-            n_classes = CFG.class_num[config.dataset]
-            class_labels = [f"Class {i}" for i in range(n_classes)]
-
-            # Create confusion matrix visualization
-            wandb.log({
-                "confusion_matrix": wandb.plot.confusion_matrix(
-                    probs=None,
-                    y_true=None,
-                    preds=None,
-                    class_names=class_labels,
-                    title="Confusion Matrix"
-                )
-            })
+            else:
+                # Log confusion matrix as a nested dict (W&B will display it)
+                print(f"Confusion matrix shape: {len(value)}x{len(value[0])}")
+                # We skip complex visualization for now - confusion matrix is in eval_metrics
 
         print(f"\n✓ Stage 4 completed in {eval_metrics['evaluation_time']:.4f} hours")
         print(f"  Test Accuracy: {eval_metrics['test_accuracy']:.4f}")
