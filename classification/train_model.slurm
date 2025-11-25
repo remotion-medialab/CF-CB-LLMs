@@ -9,7 +9,7 @@
 #SBATCH -t 3:00:00            # Runtime in HH:MM:SS (adjust as needed)
 #SBATCH --mem=24G
 #SBATCH --mail-type=END,FAIL
-#SBATCH --mail-user=pdong@mit.edu @ Change to your email
+#SBATCH --mail-user=pdong@mit.edu # Change to your email
 # Load required modules (if any)
 # module load python  # Adjust based on your Python version
 
@@ -22,6 +22,6 @@ conda activate UROPEnv
 
 
 # Run your script
-SWEEP_ID="peterdong1951-massachusetts-institute-of-technology/CB-LLM-Classification-Test/o5cvvyrb" # Change to your sweep project
+SWEEP_ID="peterdong1951-massachusetts-institute-of-technology/CB-LLM-Classification-Test/w4ejb2rj" # Change to your sweep project
 
 wandb agent "$SWEEP_ID"
