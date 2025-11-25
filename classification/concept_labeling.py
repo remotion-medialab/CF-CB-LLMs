@@ -34,7 +34,7 @@ def generate_concept_labels(
     Returns:
         dict: Metrics including similarity statistics and timing
     """
-    # Check if concept labels already exist
+    # do concepts labels already exist?
     d_name = dataset.replace('/', '_')
     prefix = f"{concept_text_sim_model}_acs/{d_name}"
     train_labels_path = f"{prefix}/concept_labels_train.npy"
@@ -73,42 +73,51 @@ def generate_concept_labels(
 
         return metrics
 
-    # Otherwise, generate concept labels from scratch
-    print(f"Generating concept labels from scratch...")
+    # generate concept labels from scratch
+    print(f"Generating concept labels...")
     device = torch.device("cuda" if torch.cuda.is_available() else
                          "mps" if torch.backends.mps.is_available() else "cpu")
 
-    print(f"Using device: {device}")
+    print(f"Device: {device}")
     print(f"Loading {dataset}...")
 
     # Load datasets
     train_dataset = load_dataset(dataset, split='train')
-    val_dataset = None
     if dataset == 'SetFit/sst2':
         val_dataset = load_dataset(dataset, split='validation')
-
-    print(f"Training data len: {len(train_dataset)}")
-    if val_dataset:
-        print(f"Val data len: {len(val_dataset)}")
+    print("training data len: ", len(train_dataset))
+    if dataset == 'SetFit/sst2':
+        print("val data len: ", len(val_dataset))
 
     # Get concept set
     concept_set = CFG.concept_set[dataset]
-    print(f"Concept len: {len(concept_set)}")
+    print(f"concept len: {len(concept_set)}")
 
-    # Load similarity model
-    print(f"Loading {concept_text_sim_model} model...")
+    # load similarity model
+    print(f"tokenizing and preparing {concept_text_sim_model} model...")
     if concept_text_sim_model == 'mpnet':
         tokenizer_sim = AutoTokenizer.from_pretrained('sentence-transformers/all-mpnet-base-v2')
         sim_model = AutoModel.from_pretrained('sentence-transformers/all-mpnet-base-v2').to(device)
     elif concept_text_sim_model == 'simcse':
         tokenizer_sim = AutoTokenizer.from_pretrained("princeton-nlp/sup-simcse-bert-base-uncased")
         sim_model = AutoModel.from_pretrained("princeton-nlp/sup-simcse-bert-base-uncased").to(device)
+    elif concept_text_sim_model == 'angle':
+        config = PeftConfig.from_pretrained('SeanLee97/angle-llama-7b-nli-v2')
+        tokenizer_sim = AutoTokenizer.from_pretrained(config.base_model_name_or_path)
+        sim_model = AutoModelForCausalLM.from_pretrained(config.base_model_name_or_path).bfloat16()
+        sim_model = PeftModel.from_pretrained(sim_model, 'SeanLee97/angle-llama-7b-nli-v2')
+        sim_model = sim_model.to(device)
+        sim_model.eval()
+        train_dataset = train_dataset.map(decorate_dataset, fn_kwargs={"d": args.dataset})
+        if args.dataset == 'SetFit/sst2':
+            val_dataset = val_dataset.map(decorate_dataset, fn_kwargs={"d": args.dataset})
+        concept_set = decorate_concepts(concept_set)
     else:
         raise ValueError(f"Unknown concept_text_sim_model: {concept_text_sim_model}")
 
     sim_model.eval()
 
-    # Encode and process datasets
+    # encode and process datasets
     print("Tokenizing datasets...")
     encoded_sim_train_dataset = train_dataset.map(
         lambda e: tokenizer_sim(e[CFG.example_name[dataset]], padding=True, truncation=True,
